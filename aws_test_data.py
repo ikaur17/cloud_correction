@@ -1,11 +1,9 @@
 import numpy as np
 import netCDF4
-import torch
-from torch.utils.data import Dataset
 
 class awsTestData():
     """
-    Pytorch dataset for the AWS training data.
+    CLass for the AWS test data.
 
     """
     def __init__(self, path, inChannels, option):
@@ -32,42 +30,29 @@ class awsTestData():
         self.channels = inChannels
         self.option = option
 #       find index for input channels
-        
+        cases = TB.shape[2]
 
-        i1, = np.argwhere(channels == inChannels[0])[0] 
-        i2, = np.argwhere(channels == inChannels[1])[0]     
-        i3, = np.argwhere(channels == inChannels[2])[0]     
-        i4, = np.argwhere(channels == inChannels[3])[0]
+        self.index = []
+        for c in self.channels:
+            self.index.append(np.argwhere(channels == c)[0,0])
+       
+        print (self.index)
+        C = []
         
-        if self.option == 4:
-            i5, = np.argwhere(channels == inChannels[4])[0]        
-            self.index = [i1, i2, i3, i4, i5]
-        else:
-            self.index = [i1, i2, i3, i4]
-        
+        for i in range(len(self.channels)):
+            C.append(TB[self.index[i], 1, :])
 
-        C1 = TB[i1, 1, :]        
-        C2 = TB[i2, 1, :]
-        C3 = TB[i3, 1, :]
-        C4 = TB[i4, 1, :]
-        if self.option == 4:
-            C5 = TB[i5, 1, :]
-
-        x = np.float32(np.stack([C1, C2, C3, C4], axis = 1))
-        if self.option == 4:
-            x = np.float32(np.stack([C1, C2, C3, C4, C5], axis = 1))
+        x = np.float32(np.stack(C, axis = 1))
         
         #store mean and std to normalise data  
 #        x_noise = self.add_noise(self.x)
-  
         self.std = np.std(x, axis = 0)
-        self.mean = np.mean(x, axis = 0)   
+        self.mean = np.mean(x, axis = 0)    
         
-#       noise free clear sky values        
-        self.y0 = np.float32(TB0[i1, 0, :])
-#       noisy clear sky values
-        self.y = np.float32(TB[i1, 0, :])
- #       self.x = self.normalise(x)
+        self.y = np.float32(TB[self.index[0], 0, :])
+        
+        self.y0 = np.float32(TB0[self.index[0], 0, :])
+        
         self.x  = x.data
         self.y  = self.y.data
         self.y0 = self.y0.data
